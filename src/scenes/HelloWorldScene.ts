@@ -27,10 +27,25 @@ export default class HelloWorldScene extends Phaser.Scene {
 
   create() {
     // Platform
-    this.add.image(400, 300, "sky");
+    const windowWidth = window.outerWidth;
+    const windowHeight = window.outerHeight;
+    console.log(windowHeight);
+
+    const skySprite = this.add.tileSprite(
+      0,
+      0,
+      windowWidth,
+      windowHeight,
+      "sky"
+    );
+    skySprite.width = screen.width;
+    skySprite.height = screen.height;
     this.platforms = this.physics.add.staticGroup();
-    this.platforms.create(400, 568, "ground").setScale(2).refreshBody();
-    this.platforms.create(600, 400, "ground");
+    this.platforms
+      .create(screen.width / 2, screen.height / 2, "ground")
+      .setScale(3, 2)
+      .refreshBody();
+    this.platforms.create(600, windowWidth / 2, "ground");
     this.platforms.create(20, 250, "ground");
     this.platforms.create(750, 220, "ground");
 
