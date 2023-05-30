@@ -10,6 +10,8 @@ export default class HelloWorldScene extends Phaser.Scene {
   scoreText: Phaser.GameObjects.Text;
   gameOver?: boolean;
   playerCollider: Physics.Arcade.Collider;
+  windowWidth: number;
+  windowHeight: number;
   constructor() {
     super();
   }
@@ -26,28 +28,31 @@ export default class HelloWorldScene extends Phaser.Scene {
   }
 
   create() {
-    // Platform
-    const windowWidth = window.outerWidth;
-    const windowHeight = window.outerHeight;
-    console.log(windowHeight);
+    // Defining window width and height
+    this.windowWidth = this.cameras.main?.width;
+    this.windowHeight = this.cameras.main?.height;
 
+    // Platform
     const skySprite = this.add.tileSprite(
       0,
       0,
-      windowWidth,
-      windowHeight,
+      screen.width,
+      screen.height,
       "sky"
     );
-    skySprite.width = screen.width;
-    skySprite.height = screen.height;
     this.platforms = this.physics.add.staticGroup();
     this.platforms
-      .create(screen.width / 2, screen.height / 2, "ground")
-      .setScale(3, 2)
+      .create(0, screen.height / 2, "ground")
+      .setScale(7, 2)
       .refreshBody();
-    this.platforms.create(600, windowWidth / 2, "ground");
-    this.platforms.create(20, 250, "ground");
-    this.platforms.create(750, 220, "ground");
+    this.platforms.create(0, this.windowHeight / 4, "ground");
+    this.platforms.create(0, this.windowHeight / 2, "ground");
+    this.platforms.create(
+      this.windowWidth / 2,
+      this.windowHeight / 2 + 50,
+      "ground"
+    );
+    this.platforms.create(screen.width / 3, screen.height / 6, "ground");
 
     // Player
     this.player = this.physics.add.sprite(100, 450, "dude");
@@ -145,7 +150,7 @@ export default class HelloWorldScene extends Phaser.Scene {
       this.player?.body?.touching.down &&
       !this.gameOver
     ) {
-      this.player.setVelocityY(-500);
+      this.player.setVelocityY(-this.windowHeight * 0.8);
     }
   }
 
