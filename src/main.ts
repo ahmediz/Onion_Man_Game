@@ -9,6 +9,10 @@ const config: Phaser.Types.Core.GameConfig = {
     autoCenter: Phaser.Scale.CENTER_BOTH,
     zoom: 1,
   },
+  dom: {
+    createContainer: true,
+  },
+  parent: "canvas",
   backgroundColor: "red",
   title: "Onion Man",
   physics: {

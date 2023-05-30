@@ -1,4 +1,5 @@
 import Phaser, { Physics } from "phaser";
+import { Button } from "~/models/navButton.model";
 
 export default class MainScene extends Phaser.Scene {
   platforms?: Phaser.Physics.Arcade.StaticGroup;
@@ -33,7 +34,13 @@ export default class MainScene extends Phaser.Scene {
     this.windowHeight = this.cameras.main?.height;
 
     // Platform
-    this.add.tileSprite(0, 0, screen.width * 2, screen.height * 2, "sky");
+    this.add.tileSprite(
+      0,
+      0,
+      this.windowWidth * 2,
+      this.windowHeight * 2,
+      "sky"
+    );
 
     this.platforms = this.physics.add.staticGroup();
     this.platforms
@@ -128,6 +135,18 @@ export default class MainScene extends Phaser.Scene {
       undefined,
       this
     );
+
+    // Creating buttons for movement for mobile
+
+    const button = this.add.dom(
+      this.cameras.main.centerX,
+      this.cameras.main.centerY,
+      "div",
+      "background-color: black; width: 220px; height: 100px; font: 48px Arial;",
+      "Go Right"
+    );
+
+    button.on("click", this.goRight);
   }
 
   update() {
@@ -151,6 +170,20 @@ export default class MainScene extends Phaser.Scene {
     ) {
       this.player.setVelocityY(-this.windowHeight * 0.8);
     }
+  }
+
+  private goLeft(): void {
+    this.player?.setVelocityX(-160);
+    this.player?.anims.play("left", true);
+  }
+  private goRight(): void {
+    console.log('asdasd');
+    
+    this.player?.setVelocityX(-160);
+    this.player?.anims.play("left", true);
+  }
+  private jumb(): void {
+    this.player.setVelocityY(-this.windowHeight * 0.8);
   }
 
   private handleCollectStar(
