@@ -1,5 +1,25 @@
 import Phaser, { Physics } from "phaser";
-import { Button } from "~/models/navButton.model";
+import { initializeApp } from "firebase/app";
+import {
+  GoogleAuthProvider,
+  User,
+  getAuth,
+  signInWithPopup,
+} from "firebase/auth";
+import { doc, getFirestore, setDoc } from "firebase/firestore";
+import { ONION_MAN_TOKEN, ONION_MAN_USER } from "~/constants";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCnHktXPVosVCshoHWejNO0keODYvqRtqs",
+  authDomain: "onion-man-game.firebaseapp.com",
+  projectId: "onion-man-game",
+  storageBucket: "onion-man-game.appspot.com",
+  messagingSenderId: "184060253688",
+  appId: "1:184060253688:web:e594ff832b8bbe24eff20d",
+  measurementId: "G-VG0Y82D082",
+};
+
+const app = initializeApp(firebaseConfig);
 
 export default class MainScene extends Phaser.Scene {
   platforms?: Phaser.Physics.Arcade.StaticGroup;
@@ -13,6 +33,11 @@ export default class MainScene extends Phaser.Scene {
   playerCollider: Physics.Arcade.Collider;
   windowWidth: number;
   windowHeight: number;
+  loginButton: Phaser.GameObjects.Text;
+  guestButton: Phaser.GameObjects.Text;
+  isLoggedIn: boolean;
+  user: User;
+  db = getFirestore(app);
   constructor() {
     super();
   }
@@ -29,6 +54,25 @@ export default class MainScene extends Phaser.Scene {
   }
 
   create() {
+    // this.login();
+    if (!!localStorage.getItem(ONION_MAN_TOKEN)) {
+      this.user = JSON.parse(localStorage.getItem(ONION_MAN_USER)!);
+      this.isLoggedIn = true;
+    }
+
+    if (!this.isLoggedIn) {
+      this.loginButton = this.add.text(100, 20, "Login", {
+        backgroundColor: "red",
+        fontSize: "32px",
+        color: "#000",
+      });
+      this.loginButton.setInteractive();
+      this.loginButton.on("pointerdown", () => {
+        this.login();
+      });
+      return;
+    }
+
     // Defining window width and height
     this.windowWidth = this.cameras.main?.width;
     this.windowHeight = this.cameras.main?.height;
@@ -41,6 +85,9 @@ export default class MainScene extends Phaser.Scene {
       this.windowHeight * 2,
       "sky"
     );
+
+    // Displaying user name
+    this.displayUserInfo();
 
     this.platforms = this.physics.add.staticGroup();
     this.platforms
@@ -138,15 +185,15 @@ export default class MainScene extends Phaser.Scene {
 
     // Creating buttons for movement for mobile
 
-    const button = this.add.dom(
-      this.cameras.main.centerX,
-      this.cameras.main.centerY,
-      "div",
-      "background-color: black; width: 220px; height: 100px; font: 48px Arial;",
-      "Go Right"
-    );
+    // const button = this.add.dom(
+    //   this.cameras.main.centerX,
+    //   this.cameras.main.centerY,
+    //   "div",
+    //   "background-color: black; width: 220px; height: 100px; font: 48px Arial;",
+    //   "Go Right"
+    // );
 
-    button.on("click", this.goRight);
+    // button.on("click", this.goRight);
   }
 
   update() {
@@ -177,8 +224,8 @@ export default class MainScene extends Phaser.Scene {
     this.player?.anims.play("left", true);
   }
   private goRight(): void {
-    console.log('asdasd');
-    
+    console.log("asdasd");
+
     this.player?.setVelocityX(-160);
     this.player?.anims.play("left", true);
   }
@@ -236,4 +283,50 @@ export default class MainScene extends Phaser.Scene {
       window.location.href = "";
     }, 5000);
   }
+
+  private login() {
+    const provider = new GoogleAuthProvider();
+    const auth = getAuth();
+    signInWithPopup(auth, provider)
+      .then(async (result) => {
+        // This gives you a Google Access Token. You can use it to access the Google API.
+        const credential = GoogleAuthProvider.credentialFromResult(result);
+        const token = credential!.accessToken;
+        // The signed-in user info.
+        const user = result.user;
+        this.user = user;
+        localStorage.setItem(ONION_MAN_USER, JSON.stringify(user));
+        localStorage.setItem(ONION_MAN_TOKEN, JSON.stringify(token));
+
+        await setDoc(doc(this.db, "users", this.user.uid), {
+          name: this.user.displayName,
+          image: this.user.photoURL,
+        });
+
+        this.isLoggedIn = true;
+        this.create();
+        // IdP data available using getAdditionalUserInfo(result)
+        // ...
+      })
+      .catch((error) => {
+        // Handle Errors here.
+        const errorCode = error.code;
+        const errorMessage = error.message;
+        // The email of the user's account used.
+        const email = error.customData.email;
+        // The AuthCredential type that was used.
+        const credential = GoogleAuthProvider.credentialFromError(error);
+        // ...
+      });
+  }
+  private displayUserInfo() {
+    this.add
+      .text(this.cameras.main.centerX, 16, this.user.displayName!, {
+        fontSize: "32px",
+        color: "#000",
+      })
+      .setOrigin(0.5, 0);
+  }
+
+  private showHighScore() {}
 }

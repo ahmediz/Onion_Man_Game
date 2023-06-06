@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "cssnano": "^4.1.11",
+    "firebase": "^9.22.1",
     "phaser": "^3.60.0"
   },
   "parcelCleanPaths": [
