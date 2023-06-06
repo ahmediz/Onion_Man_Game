@@ -406,8 +406,8 @@ export default class MainScene extends Phaser.Scene {
       name: user.displayName!,
       image: user.photoURL!,
       email: user.email!,
-      latestScore: this.user?.latestScore || 0,
-      highScore: this.user?.highScore || 0,
+      latestScore: 0,
+      highScore: 0,
     };
   }
 }
