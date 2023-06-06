@@ -5,9 +5,12 @@ import {
   User,
   getAuth,
   signInWithPopup,
+  signInAnonymously,
+  deleteUser,
 } from "firebase/auth";
-import { doc, getFirestore, setDoc } from "firebase/firestore";
+import { doc, getFirestore, setDoc, updateDoc } from "firebase/firestore";
 import { ONION_MAN_TOKEN, ONION_MAN_USER } from "~/constants";
+import { IUser } from "~/models/IUser.model";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCnHktXPVosVCshoHWejNO0keODYvqRtqs",
@@ -33,10 +36,8 @@ export default class MainScene extends Phaser.Scene {
   playerCollider: Physics.Arcade.Collider;
   windowWidth: number;
   windowHeight: number;
-  loginButton: Phaser.GameObjects.Text;
-  guestButton: Phaser.GameObjects.Text;
   isLoggedIn: boolean;
-  user: User;
+  user: IUser;
   db = getFirestore(app);
   constructor() {
     super();
@@ -53,23 +54,75 @@ export default class MainScene extends Phaser.Scene {
     });
   }
 
-  create() {
-    // this.login();
-    if (!!localStorage.getItem(ONION_MAN_TOKEN)) {
-      this.user = JSON.parse(localStorage.getItem(ONION_MAN_USER)!);
-      this.isLoggedIn = true;
-    }
+  async create() {
+    const user = await this.isUserAuthenticated();
 
-    if (!this.isLoggedIn) {
-      this.loginButton = this.add.text(100, 20, "Login", {
-        backgroundColor: "red",
-        fontSize: "32px",
-        color: "#000",
-      });
-      this.loginButton.setInteractive();
-      this.loginButton.on("pointerdown", () => {
+    if (user) {
+      this.setUser(user!);
+    }
+    
+    if (!this.user) {
+      const loginButton = this.add
+        .text(
+          this.cameras.main.centerX,
+          this.cameras.main.centerY - 35,
+          "Login",
+          {
+            backgroundColor: "#45ccf8",
+            fontSize: "32px",
+            color: "#000",
+            padding: {
+              x: 20,
+              y: 10,
+            },
+          }
+        )
+        .setInteractive({ useHandCursor: true })
+        .setOrigin(0.5, 0);
+      loginButton.on("pointerdown", () => {
         this.login();
       });
+      loginButton.on("pointerover", () =>
+        loginButton.setStyle({ backgroundColor: "#45ccf8" })
+      );
+      loginButton.on("pointerout", () =>
+        loginButton.setStyle({ backgroundColor: "#3aadd2" })
+      );
+
+      const continueAsGuestButton = this.add
+        .text(
+          this.cameras.main.centerX,
+          this.cameras.main.centerY + 35,
+          "Continue as Guest",
+          {
+            backgroundColor: "#45ccf8",
+            fontSize: "32px",
+            color: "#000",
+            padding: {
+              x: 20,
+              y: 10,
+            },
+          }
+        )
+        .setOrigin(0.5, 0);
+      continueAsGuestButton.setInteractive({ useHandCursor: true });
+      continueAsGuestButton.on("pointerdown", () => {
+        const auth = getAuth();
+        signInAnonymously(auth).then(() => {
+          this.create();
+          const user = auth.currentUser;
+
+          deleteUser(user!).then(() => {
+            // console.log("deleted");
+          });
+        });
+      });
+      continueAsGuestButton.on("pointerover", () =>
+        continueAsGuestButton.setStyle({ backgroundColor: "#45ccf8" })
+      );
+      continueAsGuestButton.on("pointerout", () =>
+        continueAsGuestButton.setStyle({ backgroundColor: "#3aadd2" })
+      );
       return;
     }
 
@@ -168,7 +221,7 @@ export default class MainScene extends Phaser.Scene {
 
     // Defining Score Text
     this.scoreText = this.add.text(16, 16, "Score: 0", {
-      fontSize: "32px",
+      fontSize: "28px",
       color: "#000",
     });
 
@@ -182,18 +235,6 @@ export default class MainScene extends Phaser.Scene {
       undefined,
       this
     );
-
-    // Creating buttons for movement for mobile
-
-    // const button = this.add.dom(
-    //   this.cameras.main.centerX,
-    //   this.cameras.main.centerY,
-    //   "div",
-    //   "background-color: black; width: 220px; height: 100px; font: 48px Arial;",
-    //   "Go Right"
-    // );
-
-    // button.on("click", this.goRight);
   }
 
   update() {
@@ -267,21 +308,26 @@ export default class MainScene extends Phaser.Scene {
     bomb.setVelocity(Phaser.Math.Between(-200, 200), 20);
   }
 
-  private handleBombHit(
+  private async handleBombHit(
     player:
       | Phaser.Types.Physics.Arcade.GameObjectWithBody
       | Phaser.Tilemaps.Tile,
     s: Phaser.Types.Physics.Arcade.GameObjectWithBody | Phaser.Tilemaps.Tile
-  ): any {
+  ): Promise<any> {
     // this.physics.pause();
     this.player.setTint(0xff0000);
     this.player.anims.play("turn");
     this.physics.world.removeCollider(this.playerCollider);
     this.player.setCollideWorldBounds(false);
     this.gameOver = true;
-    setTimeout(() => {
-      window.location.href = "";
-    }, 5000);
+
+    // Saving Score of user and add it to scores collection
+    const scoreDoc = doc(this.db, "users", this.user!.id);
+    await updateDoc(scoreDoc, {
+      latestScore: this.scoreText,
+      highScore: Math.max(+this.scoreText, this.user?.highScore!),
+    });
+    window.location.href = "";
   }
 
   private login() {
@@ -294,24 +340,21 @@ export default class MainScene extends Phaser.Scene {
         const token = credential!.accessToken;
         // The signed-in user info.
         const user = result.user;
-        this.user = user;
-        localStorage.setItem(ONION_MAN_USER, JSON.stringify(user));
-        localStorage.setItem(ONION_MAN_TOKEN, JSON.stringify(token));
-
-        await setDoc(doc(this.db, "users", this.user.uid), {
-          name: this.user.displayName,
-          image: this.user.photoURL,
+        this.setUser(user);
+        await setDoc(doc(this.db, "users", this.user!.id), {
+          ...this.user,
         });
 
-        this.isLoggedIn = true;
         this.create();
         // IdP data available using getAdditionalUserInfo(result)
         // ...
       })
       .catch((error) => {
         // Handle Errors here.
+
         const errorCode = error.code;
         const errorMessage = error.message;
+        console.log(errorMessage);
         // The email of the user's account used.
         const email = error.customData.email;
         // The AuthCredential type that was used.
@@ -321,12 +364,39 @@ export default class MainScene extends Phaser.Scene {
   }
   private displayUserInfo() {
     this.add
-      .text(this.cameras.main.centerX, 16, this.user.displayName!, {
-        fontSize: "32px",
+      .text(this.cameras.main.centerX, 16, this.user?.name || "Guest", {
+        fontSize: "28px",
         color: "#000",
       })
       .setOrigin(0.5, 0);
+
+    if (this.user?.latestScore) {
+      this.add
+        .text(this.windowWidth - 16, 16, `${String(this.user?.highScore)}`, {
+          fontSize: "28px",
+          color: "#000",
+        })
+        .setOrigin(1, 0);
+    }
+  }
+
+  private isUserAuthenticated(): Promise<User | null> {
+    return new Promise((resolve, reject) => {
+      getAuth().onAuthStateChanged((user) => {
+        resolve(user);
+      }, reject);
+    });
   }
 
   private showHighScore() {}
+  private setUser(user: User) {
+    this.user = {
+      id: user.uid,
+      name: user.displayName!,
+      image: user.photoURL!,
+      email: user.email!,
+      latestScore: 0,
+      highScore: 0,
+    };
+  }
 }
