@@ -8,7 +8,13 @@ import {
   signInAnonymously,
   deleteUser,
 } from "firebase/auth";
-import { doc, getFirestore, setDoc, updateDoc } from "firebase/firestore";
+import {
+  doc,
+  getFirestore,
+  setDoc,
+  updateDoc,
+  getDoc,
+} from "firebase/firestore";
 import { ONION_MAN_TOKEN, ONION_MAN_USER } from "~/constants";
 import { IUser } from "~/models/IUser.model";
 
@@ -58,9 +64,13 @@ export default class MainScene extends Phaser.Scene {
     const user = await this.isUserAuthenticated();
 
     if (user) {
-      this.setUser(user!);
+      const docRef = doc(this.db, "users", user.uid);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        this.user = docSnap.data() as IUser;
+      }
     }
-    
+
     if (!this.user) {
       const loginButton = this.add
         .text(
@@ -265,8 +275,6 @@ export default class MainScene extends Phaser.Scene {
     this.player?.anims.play("left", true);
   }
   private goRight(): void {
-    console.log("asdasd");
-
     this.player?.setVelocityX(-160);
     this.player?.anims.play("left", true);
   }
@@ -323,11 +331,14 @@ export default class MainScene extends Phaser.Scene {
 
     // Saving Score of user and add it to scores collection
     const scoreDoc = doc(this.db, "users", this.user!.id);
+
     await updateDoc(scoreDoc, {
-      latestScore: this.scoreText,
-      highScore: Math.max(+this.scoreText, this.user?.highScore!),
+      latestScore: this.score,
+      highScore: Math.max(this.score, +this.user?.highScore!),
     });
-    window.location.href = "";
+    setTimeout(() => {
+      window.location.href = "";
+    }, 3000);
   }
 
   private login() {
@@ -395,8 +406,8 @@ export default class MainScene extends Phaser.Scene {
       name: user.displayName!,
       image: user.photoURL!,
       email: user.email!,
-      latestScore: 0,
-      highScore: 0,
+      latestScore: this.user?.latestScore || 0,
+      highScore: this.user?.highScore || 0,
     };
   }
 }
