@@ -27,6 +27,7 @@ export default class GameScene extends Phaser.Scene {
   user: IUser;
   users: IUser[] = [];
   db = getFirestore();
+  highScoresPanel: any;
   constructor() {
     super("game");
   }
@@ -289,7 +290,11 @@ export default class GameScene extends Phaser.Scene {
   }
 
   private showHighScore() {
-    new HighscoresPanel(this, this.users);
+    this.highScoresPanel = new HighscoresPanel(
+      this,
+      this.users,
+      this.highScoresPanel
+    );
   }
 
   private async getUsers() {
