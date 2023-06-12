@@ -3,9 +3,15 @@ import { IUser } from "~/models/IUser.model";
 export default class HighscoresPanel {
   private scene!: Phaser.Scene;
   private container!: Phaser.GameObjects.Container;
+  private users: IUser[];
 
   constructor(scene: Phaser.Scene, users: IUser[], highScoresPanel?: any) {
+    const rowHeight = 56.4296875; // username or score cell  height;
+    const listMaxNo = 5;
     this.scene = scene;
+    this.users = users
+      .sort((a: IUser, b: IUser) => a.highScore! - b.highScore!)
+      .reverse();
     this.scene.physics.pause();
 
     if (highScoresPanel?.container) {
@@ -20,13 +26,29 @@ export default class HighscoresPanel {
       this.scene.cameras.main.centerY
     );
 
-    const bg = this.scene.add.rectangle(0, 0, width / 2, height / 2, 0x000000);
+    const bg = this.scene.add.rectangle(
+      0,
+      0,
+      width / 2,
+      rowHeight * listMaxNo,
+      0x000000
+    );
 
     this.container.add(bg);
 
-    users.forEach((user: IUser, index: number) => {
+    this.users.slice(0, listMaxNo).forEach((user: IUser, index: number) => {
       const rowContainer = this.scene.add.container(-width / 4, -height / 4);
-      const rowY = index > 0 ? 56 * index : 0;
+      const rowY = index > 0 ? rowHeight * (index + 1) : rowHeight;
+      if (user.highScore! === 0) {
+        const noData = this.scene.add
+          .text(0, rowY, "No super heroes yet!", {
+            color: "white",
+          })
+          .setPadding(20);
+        rowContainer.add(noData);
+        this.container.add(rowContainer)
+        return;
+      }
       this.scene.load.image(user.name, `${user.image}.png`);
 
       const userimage = this.scene.add
