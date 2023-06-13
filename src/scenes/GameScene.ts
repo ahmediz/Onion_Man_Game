@@ -260,7 +260,7 @@ export default class GameScene extends Phaser.Scene {
     this.gameOver = true;
 
     // Saving Score of user and add it to scores collection
-    if (!this.user!.id) {
+    if (!this.user) {
       setTimeout(() => {
         window.location.href = "";
       }, 3000);
