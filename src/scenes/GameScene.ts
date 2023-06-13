@@ -28,6 +28,12 @@ export default class GameScene extends Phaser.Scene {
   users: IUser[] = [];
   db = getFirestore();
   highScoresPanel: any;
+  goRightButton: Phaser.GameObjects.Image;
+  goRightButtonIsDown: boolean;
+  goLeftButton: Phaser.GameObjects.Image;
+  goLeftButtonIsDown: boolean;
+  goUpButton: Phaser.GameObjects.Image;
+  goUpButtonIsDown: boolean;
   constructor() {
     super("game");
   }
@@ -38,7 +44,6 @@ export default class GameScene extends Phaser.Scene {
   }
 
   preload() {
-    this.load.image("sky", "assets/sky.png");
     this.load.image("ground", "assets/platform.png");
     this.load.image("star", "assets/star.png");
     this.load.image("bomb", "assets/bomb.png");
@@ -46,6 +51,10 @@ export default class GameScene extends Phaser.Scene {
       frameWidth: 32,
       frameHeight: 48,
     });
+    this.load.image("sky", "assets/sky.png");
+    this.load.image("right", "assets/arrowRight.png");
+    this.load.image("left", "assets/arrowLeft.png");
+    this.load.image("up", "assets/arrowUp.png");
   }
 
   create() {
@@ -175,14 +184,62 @@ export default class GameScene extends Phaser.Scene {
       undefined,
       this
     );
+
+    // Creating direction buttons for touch devices
+
+    //* Right
+    this.goRightButton = this.add
+      .image(this.windowWidth - 16, this.windowHeight - 6, "right")
+      .setOrigin(1, 1)
+      .setInteractive({ useHandCursor: true });
+    this.goRightButton.on("pointerdown", () => {
+      this.goRightButtonIsDown = true;
+    });
+    this.goRightButton.on("pointerup", () => {
+      this.goRightButtonIsDown = false;
+    });
+
+    //* Left
+    this.goLeftButton = this.add
+      .image(
+        this.windowWidth - this.goRightButton.width - 16,
+        this.windowHeight - 6,
+        "left"
+      )
+      .setOrigin(1, 1)
+      .setInteractive({ useHandCursor: true });
+    this.goLeftButton.on("pointerdown", () => {
+      this.goLeftButtonIsDown = true;
+    });
+    this.goLeftButton.on("pointerup", () => {
+      this.goLeftButtonIsDown = false;
+    });
+
+    //* Left
+    this.goUpButton = this.add
+      .image(16, this.windowHeight - 6, "up")
+      .setOrigin(0, 1)
+      .setInteractive({ useHandCursor: true });
+    this.goUpButton.on("pointerdown", () => {
+      this.goUpButtonIsDown = true;
+    });
+    this.goUpButton.on("pointerup", () => {
+      this.goUpButtonIsDown = false;
+    });
   }
 
   update() {
     // Left & Right
-    if (this.cursors?.left.isDown && !this.gameOver) {
+    if (
+      (this.cursors?.left.isDown || this.goLeftButtonIsDown) &&
+      !this.gameOver
+    ) {
       this.player?.setVelocityX(-160);
       this.player?.anims.play("left", true);
-    } else if (this.cursors?.right.isDown && !this.gameOver) {
+    } else if (
+      (this.cursors?.right.isDown || this.goRightButtonIsDown) &&
+      !this.gameOver
+    ) {
       this.player?.setVelocityX(160);
       this.player?.anims.play("right", true);
     } else {
@@ -192,24 +249,12 @@ export default class GameScene extends Phaser.Scene {
 
     // Jumping
     if (
-      this.cursors?.up.isDown &&
+      (this.cursors?.up.isDown || this.goUpButtonIsDown) &&
       this.player?.body?.touching.down &&
       !this.gameOver
     ) {
       this.player.setVelocityY(-this.windowHeight * 0.8);
     }
-  }
-
-  private goLeft(): void {
-    this.player?.setVelocityX(-160);
-    this.player?.anims.play("left", true);
-  }
-  private goRight(): void {
-    this.player?.setVelocityX(-160);
-    this.player?.anims.play("left", true);
-  }
-  private jumb(): void {
-    this.player.setVelocityY(-this.windowHeight * 0.8);
   }
 
   private handleCollectStar(
