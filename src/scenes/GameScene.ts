@@ -94,7 +94,7 @@ export default class GameScene extends Phaser.Scene {
     this.platforms = this.physics.add.staticGroup();
     this.platforms
       .create(0, this.windowHeight - 30, "ground")
-      .setScale(7, 2)
+      .setScale(7, 4)
       .refreshBody();
     this.platforms.create(0, this.windowHeight / 4, "ground");
     this.platforms.create(0, this.windowHeight / 2, "ground");
@@ -189,11 +189,14 @@ export default class GameScene extends Phaser.Scene {
 
     //* Right
     this.goRightButton = this.add
-      .image(this.windowWidth - 16, this.windowHeight - 6, "right")
+      .image(this.windowWidth - 16, this.windowHeight - 8, "right")
       .setOrigin(1, 1)
+      .setScale(1.5)
       .setInteractive({ useHandCursor: true });
     this.goRightButton.on("pointerdown", () => {
       this.goRightButtonIsDown = true;
+      this.goLeftButtonIsDown = false;
+      this.goUpButtonIsDown = false;
     });
     this.goRightButton.on("pointerup", () => {
       this.goRightButtonIsDown = false;
@@ -202,26 +205,32 @@ export default class GameScene extends Phaser.Scene {
     //* Left
     this.goLeftButton = this.add
       .image(
-        this.windowWidth - this.goRightButton.width - 16,
-        this.windowHeight - 6,
+        this.windowWidth - this.goRightButton.width - 48,
+        this.windowHeight - 8,
         "left"
       )
       .setOrigin(1, 1)
+      .setScale(1.5)
       .setInteractive({ useHandCursor: true });
     this.goLeftButton.on("pointerdown", () => {
       this.goLeftButtonIsDown = true;
+      this.goRightButtonIsDown = false;
+      this.goUpButtonIsDown = false;
     });
     this.goLeftButton.on("pointerup", () => {
       this.goLeftButtonIsDown = false;
     });
 
-    //* Left
+    //* Up
     this.goUpButton = this.add
-      .image(16, this.windowHeight - 6, "up")
+      .image(16, this.windowHeight - 8, "up")
       .setOrigin(0, 1)
+      .setScale(1.5)
       .setInteractive({ useHandCursor: true });
     this.goUpButton.on("pointerdown", () => {
       this.goUpButtonIsDown = true;
+      this.goRightButtonIsDown = false;
+      this.goLeftButtonIsDown = false;
     });
     this.goUpButton.on("pointerup", () => {
       this.goUpButtonIsDown = false;
