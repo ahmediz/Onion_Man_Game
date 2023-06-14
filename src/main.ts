@@ -2,8 +2,8 @@ import Phaser from "phaser";
 import GameScene from "./scenes/GameScene";
 import LoadingScene from "./scenes/LoadingScene";
 import LoginScene from "./scenes/LoginScene";
-
 import MainScene from "./scenes/MainScene";
+import SwipePlugin from "phaser3-swipe-plugin";
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
@@ -21,6 +21,20 @@ const config: Phaser.Types.Core.GameConfig = {
     },
   },
   scene: [LoadingScene, MainScene, LoginScene, GameScene],
+  plugins: {
+    global: [
+      {
+        key: "SwipePlugin",
+        plugin: SwipePlugin,
+        start: true,
+        // custom options
+        data: {
+          // you can give your value for min offset
+          offset: 0,
+        },
+      },
+    ],
+  },
 };
 
 export default new Phaser.Game(config);

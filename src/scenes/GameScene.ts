@@ -20,7 +20,8 @@ export default class GameScene extends Phaser.Scene {
   score = 0;
   scoreText: Phaser.GameObjects.Text;
   gameOver?: boolean;
-  playerCollider: Physics.Arcade.Collider;
+  playerColliderWithPlatforms: Physics.Arcade.Collider;
+  playerColliderWithBombs: Physics.Arcade.Collider;
   windowWidth: number;
   windowHeight: number;
   isLoggedIn: boolean;
@@ -138,7 +139,7 @@ export default class GameScene extends Phaser.Scene {
 
     // Set Gravity and Collision for Player
     this.player.setGravityY(300);
-    this.playerCollider = this.physics.add.collider(
+    this.playerColliderWithPlatforms = this.physics.add.collider(
       this.player,
       this.platforms
     );
@@ -180,7 +181,7 @@ export default class GameScene extends Phaser.Scene {
     // Defining Bombs
     this.bombs = this.physics.add.group();
     this.physics.add.collider(this.bombs, this.platforms);
-    this.physics.add.collider(
+    this.playerColliderWithBombs = this.physics.add.collider(
       this.bombs,
       this.player,
       this.handleBombHit,
@@ -213,14 +214,7 @@ export default class GameScene extends Phaser.Scene {
 
       //* Left
       this.goLeftButton = this.add
-        .rectangle(
-          0,
-          0,
-          this.windowWidth / 2,
-          this.windowHeight,
-          0x000000,
-          0
-        )
+        .rectangle(0, 0, this.windowWidth / 2, this.windowHeight, 0x000000, 0)
         .setOrigin(0, 0)
         .setInteractive({ useHandCursor: true });
       this.goLeftButton.on("pointerdown", () => {
@@ -231,21 +225,6 @@ export default class GameScene extends Phaser.Scene {
       this.goLeftButton.on("pointerup", () => {
         this.goLeftButtonIsDown = false;
       });
-
-      //* Up
-      this.goUpButton = this.add
-        .image(16, this.windowHeight - 8, "up")
-        .setOrigin(0, 1)
-        .setScale(1.5)
-        .setInteractive({ useHandCursor: true });
-      this.goUpButton.on("pointerdown", () => {
-        this.goUpButtonIsDown = true;
-        this.goRightButtonIsDown = false;
-        this.goLeftButtonIsDown = false;
-      });
-      this.goUpButton.on("pointerup", () => {
-        this.goUpButtonIsDown = false;
-      });
     }
 
     this.scale.on("orientationchange", (orientation) => {
@@ -255,6 +234,18 @@ export default class GameScene extends Phaser.Scene {
       } else if (orientation === Phaser.Scale.LANDSCAPE) {
         console.log("landscape");
         this.scale.resize(this.windowWidth, this.windowHeight);
+      }
+    });
+
+    this.game.events.on("swipe", (dir) => {
+      // 'up', 'right', 'down' or 'left'
+      if (dir === "up") {
+        this.goUpButtonIsDown = true;
+        this.goRightButtonIsDown = false;
+        this.goLeftButtonIsDown = false;
+        setTimeout(() => {
+          this.goUpButtonIsDown = false;
+        }, 100);
       }
     });
   }
@@ -330,7 +321,8 @@ export default class GameScene extends Phaser.Scene {
   ): Promise<any> {
     this.player.setTint(0xff0000);
     this.player.anims.play("turn");
-    this.physics.world.removeCollider(this.playerCollider);
+    this.physics.world.removeCollider(this.playerColliderWithPlatforms);
+    this.physics.world.removeCollider(this.playerColliderWithBombs);
     this.player.setCollideWorldBounds(false);
     this.gameOver = true;
 
@@ -374,6 +366,7 @@ export default class GameScene extends Phaser.Scene {
   }
 
   private async getUsers() {
+    this.users = [];
     const querySnapshot = await getDocs(collection(this.db, "users"));
     querySnapshot.forEach((doc) => {
       const user = doc.data() as IUser;
@@ -382,7 +375,7 @@ export default class GameScene extends Phaser.Scene {
   }
 
   private tryAgain(): void {
-    this.users = [];
+    this.gameOver = false;
     this.scene.restart();
   }
 }
