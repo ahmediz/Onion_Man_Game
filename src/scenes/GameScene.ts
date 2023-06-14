@@ -55,6 +55,15 @@ export default class GameScene extends Phaser.Scene {
     this.load.image("right", "assets/arrowRight.png");
     this.load.image("left", "assets/arrowLeft.png");
     this.load.image("up", "assets/arrowUp.png");
+
+    
+    this.load.on(
+      "progress",
+      function (progress) {
+        console.log(progress);
+      },
+      this
+    );
   }
 
   create() {
@@ -234,6 +243,16 @@ export default class GameScene extends Phaser.Scene {
     });
     this.goUpButton.on("pointerup", () => {
       this.goUpButtonIsDown = false;
+    });
+
+    this.scale.on("orientationchange", (orientation) => {
+      if (orientation === Phaser.Scale.PORTRAIT) {
+        console.log("portrait");
+
+        this.scale.scaleMode = Phaser.Scale.FIT;
+      } else if (orientation === Phaser.Scale.LANDSCAPE) {
+        console.log("landscape");
+      }
     });
   }
 

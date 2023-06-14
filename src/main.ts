@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import GameScene from "./scenes/GameScene";
+import LoadingScene from "./scenes/LoadingScene";
 import LoginScene from "./scenes/LoginScene";
 
 import MainScene from "./scenes/MainScene";
@@ -19,7 +20,7 @@ const config: Phaser.Types.Core.GameConfig = {
       debug: false,
     },
   },
-  scene: [MainScene, LoginScene, GameScene],
+  scene: [LoadingScene, MainScene, LoginScene, GameScene],
 };
 
 export default new Phaser.Game(config);
