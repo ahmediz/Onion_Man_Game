@@ -28,9 +28,9 @@ export default class GameScene extends Phaser.Scene {
   users: IUser[] = [];
   db = getFirestore();
   highScoresPanel: any;
-  goRightButton: Phaser.GameObjects.Image;
+  goRightButton: Phaser.GameObjects.Rectangle;
   goRightButtonIsDown: boolean;
-  goLeftButton: Phaser.GameObjects.Image;
+  goLeftButton: Phaser.GameObjects.Rectangle;
   goLeftButtonIsDown: boolean;
   goUpButton: Phaser.GameObjects.Image;
   goUpButtonIsDown: boolean;
@@ -52,18 +52,12 @@ export default class GameScene extends Phaser.Scene {
       frameHeight: 48,
     });
     this.load.image("sky", "assets/sky.png");
-    this.load.image("right", "assets/arrowRight.png");
-    this.load.image("left", "assets/arrowLeft.png");
-    this.load.image("up", "assets/arrowUp.png");
 
-    
-    this.load.on(
-      "progress",
-      function (progress) {
-        console.log(progress);
-      },
-      this
-    );
+    if (!this.sys.game.device.os.desktop) {
+      this.load.image("right", "assets/arrowRight.png");
+      this.load.image("left", "assets/arrowLeft.png");
+      this.load.image("up", "assets/arrowUp.png");
+    }
   }
 
   create() {
@@ -194,64 +188,73 @@ export default class GameScene extends Phaser.Scene {
       this
     );
 
-    // Creating direction buttons for touch devices
+    // Creating direction buttons for touch devices only
+    if (!this.sys.game.device.os.desktop) {
+      //* Right
+      this.goRightButton = this.add
+        .rectangle(
+          this.windowWidth,
+          0,
+          this.windowWidth / 2,
+          this.windowHeight,
+          0x000000,
+          0
+        )
+        .setOrigin(1, 0)
+        .setInteractive({ useHandCursor: true });
+      this.goRightButton.on("pointerdown", () => {
+        this.goRightButtonIsDown = true;
+        this.goLeftButtonIsDown = false;
+        this.goUpButtonIsDown = false;
+      });
+      this.goRightButton.on("pointerup", () => {
+        this.goRightButtonIsDown = false;
+      });
 
-    //* Right
-    this.goRightButton = this.add
-      .image(this.windowWidth - 16, this.windowHeight - 8, "right")
-      .setOrigin(1, 1)
-      .setScale(1.5)
-      .setInteractive({ useHandCursor: true });
-    this.goRightButton.on("pointerdown", () => {
-      this.goRightButtonIsDown = true;
-      this.goLeftButtonIsDown = false;
-      this.goUpButtonIsDown = false;
-    });
-    this.goRightButton.on("pointerup", () => {
-      this.goRightButtonIsDown = false;
-    });
+      //* Left
+      this.goLeftButton = this.add
+        .rectangle(
+          0,
+          0,
+          this.windowWidth / 2,
+          this.windowHeight,
+          0x000000,
+          0
+        )
+        .setOrigin(0, 0)
+        .setInteractive({ useHandCursor: true });
+      this.goLeftButton.on("pointerdown", () => {
+        this.goLeftButtonIsDown = true;
+        this.goRightButtonIsDown = false;
+        this.goUpButtonIsDown = false;
+      });
+      this.goLeftButton.on("pointerup", () => {
+        this.goLeftButtonIsDown = false;
+      });
 
-    //* Left
-    this.goLeftButton = this.add
-      .image(
-        this.windowWidth - this.goRightButton.width - 48,
-        this.windowHeight - 8,
-        "left"
-      )
-      .setOrigin(1, 1)
-      .setScale(1.5)
-      .setInteractive({ useHandCursor: true });
-    this.goLeftButton.on("pointerdown", () => {
-      this.goLeftButtonIsDown = true;
-      this.goRightButtonIsDown = false;
-      this.goUpButtonIsDown = false;
-    });
-    this.goLeftButton.on("pointerup", () => {
-      this.goLeftButtonIsDown = false;
-    });
-
-    //* Up
-    this.goUpButton = this.add
-      .image(16, this.windowHeight - 8, "up")
-      .setOrigin(0, 1)
-      .setScale(1.5)
-      .setInteractive({ useHandCursor: true });
-    this.goUpButton.on("pointerdown", () => {
-      this.goUpButtonIsDown = true;
-      this.goRightButtonIsDown = false;
-      this.goLeftButtonIsDown = false;
-    });
-    this.goUpButton.on("pointerup", () => {
-      this.goUpButtonIsDown = false;
-    });
+      //* Up
+      this.goUpButton = this.add
+        .image(16, this.windowHeight - 8, "up")
+        .setOrigin(0, 1)
+        .setScale(1.5)
+        .setInteractive({ useHandCursor: true });
+      this.goUpButton.on("pointerdown", () => {
+        this.goUpButtonIsDown = true;
+        this.goRightButtonIsDown = false;
+        this.goLeftButtonIsDown = false;
+      });
+      this.goUpButton.on("pointerup", () => {
+        this.goUpButtonIsDown = false;
+      });
+    }
 
     this.scale.on("orientationchange", (orientation) => {
       if (orientation === Phaser.Scale.PORTRAIT) {
         console.log("portrait");
-
-        this.scale.scaleMode = Phaser.Scale.FIT;
+        this.scale.resize(this.windowWidth, (this.windowHeight * 9) / 16);
       } else if (orientation === Phaser.Scale.LANDSCAPE) {
         console.log("landscape");
+        this.scale.resize(this.windowWidth, this.windowHeight);
       }
     });
   }
@@ -325,7 +328,6 @@ export default class GameScene extends Phaser.Scene {
       | Phaser.Tilemaps.Tile,
     s: Phaser.Types.Physics.Arcade.GameObjectWithBody | Phaser.Tilemaps.Tile
   ): Promise<any> {
-    // this.physics.pause();
     this.player.setTint(0xff0000);
     this.player.anims.play("turn");
     this.physics.world.removeCollider(this.playerCollider);
@@ -333,20 +335,15 @@ export default class GameScene extends Phaser.Scene {
     this.gameOver = true;
 
     // Saving Score of user and add it to scores collection
-    if (!this.user) {
-      setTimeout(() => {
-        window.location.href = "";
-      }, 3000);
-      return;
+    if (this.user) {
+      const scoreDoc = doc(this.db, "users", this.user!.id);
+      await updateDoc(scoreDoc, {
+        latestScore: this.score,
+        highScore: Math.max(this.score, +this.user?.highScore!),
+      });
     }
-    const scoreDoc = doc(this.db, "users", this.user!.id);
-
-    await updateDoc(scoreDoc, {
-      latestScore: this.score,
-      highScore: Math.max(this.score, +this.user?.highScore!),
-    });
     setTimeout(() => {
-      window.location.href = "";
+      this.tryAgain();
     }, 3000);
   }
 
@@ -382,5 +379,10 @@ export default class GameScene extends Phaser.Scene {
       const user = doc.data() as IUser;
       this.users.push(user);
     });
+  }
+
+  private tryAgain(): void {
+    this.users = [];
+    this.scene.restart();
   }
 }

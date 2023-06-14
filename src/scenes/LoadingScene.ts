@@ -97,9 +97,7 @@ export default class LoadingScene extends Phaser.Scene {
       "logo",
       4
     );
-    setTimeout(() => {
-      this.scene.start("main");
-    }, 2000);
+    this.scene.start("main");
   }
 
   update() {}
