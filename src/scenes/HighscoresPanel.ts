@@ -36,44 +36,48 @@ export default class HighscoresPanel {
 
     this.container.add(bg);
 
-    this.users.slice(0, listMaxNo).forEach((user: IUser, index: number) => {
-      const rowContainer = this.scene.add.container(-width / 4, -height / 4);
-      const rowY = index > 0 ? rowHeight * (index + 1) : rowHeight;
-      if (user.highScore! === 0) {
-        const noData = this.scene.add
-          .text(0, rowY, "No super heroes yet!", {
+    this.users
+      .slice(0, listMaxNo)
+      .filter((user) => user.highScore)
+      .forEach((user: IUser, index: number) => {
+        const rowContainer = this.scene.add.container(-width / 4, -height / 4);
+        const rowY = index > 0 ? rowHeight * (index + 1) : rowHeight;
+
+        if (this.users.length === 1 && user.highScore! === 0) {
+          const noData = this.scene.add
+            .text(0, rowY, "No super heroes yet!", {
+              color: "white",
+            })
+            .setPadding(20);
+          rowContainer.add(noData);
+          this.container.add(rowContainer);
+          return;
+        }
+
+        this.scene.load.image(user.name, `${user.image}.png`);
+
+        const userimage = this.scene.add
+          .image(-(bg.width / 2), -(bg.height / 2), user.name)
+          .setOrigin(0, 0);
+        userimage.width = 50;
+        userimage.height = 50;
+
+        const username = this.scene.add
+          .text(0, rowY, user.name, {
             color: "white",
           })
           .setPadding(20);
-        rowContainer.add(noData);
-        this.container.add(rowContainer)
-        return;
-      }
-      this.scene.load.image(user.name, `${user.image}.png`);
 
-      const userimage = this.scene.add
-        .image(-(bg.width / 2), -(bg.height / 2), user.name)
-        .setOrigin(0, 0);
-      userimage.width = 50;
-      userimage.height = 50;
+        const score = this.scene.add
+          .text(bg.width, rowY, String(user.highScore), {
+            color: "white",
+          })
+          .setPadding(20)
+          .setOrigin(1, 0);
 
-      const username = this.scene.add
-        .text(0, rowY, user.name, {
-          color: "white",
-        })
-        .setPadding(20);
-
-      const score = this.scene.add
-        .text(bg.width, rowY, String(user.highScore), {
-          color: "white",
-        })
-        .setPadding(20)
-        .setOrigin(1, 0);
-
-      rowContainer.add(username);
-      rowContainer.add(score);
-
-      this.container.add(rowContainer);
-    });
+        rowContainer.add(username);
+        rowContainer.add(score);
+        this.container.add(rowContainer);
+      });
   }
 }

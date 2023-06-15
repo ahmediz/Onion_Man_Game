@@ -42,7 +42,7 @@ export default class MainScene extends Phaser.Scene {
 
     // Displaying login options if user not authenticated
     if (!this.user) {
-      this.scene.start("login", { key: "hello" });
+      this.scene.start("login");
       return;
     }
   }

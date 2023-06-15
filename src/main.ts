@@ -30,7 +30,7 @@ const config: Phaser.Types.Core.GameConfig = {
         // custom options
         data: {
           // you can give your value for min offset
-          offset: 100,
+          offset: 50,
         },
       },
     ],

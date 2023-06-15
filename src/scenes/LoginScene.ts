@@ -6,7 +6,13 @@ import {
   signInWithPopup,
   User,
 } from "firebase/auth";
-import { doc, setDoc, getFirestore } from "firebase/firestore";
+import {
+  doc,
+  setDoc,
+  getFirestore,
+  getDoc,
+  updateDoc,
+} from "firebase/firestore";
 import { IUser } from "~/models/IUser.model";
 
 export default class LoginScene extends Phaser.Scene {
@@ -98,17 +104,27 @@ export default class LoginScene extends Phaser.Scene {
         // The signed-in user info.
         const user = result.user;
         this.setUser(user);
-        await setDoc(doc(this.db, "users", this.user!.id), {
-          ...this.user,
-        });
 
+        // check if already saved before
+        const docRef = doc(this.db, "users", user.uid);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          // Updating user info
+          await updateDoc(doc(this.db, "users", this.user!.id), {
+            ...this.user,
+          });
+        } else {
+          // Save new user
+          await setDoc(doc(this.db, "users", this.user!.id), {
+            ...this.user,
+          });
+        }
         this.scene.start("game", { user: this.user });
         // IdP data available using getAdditionalUserInfo(result)
         // ...
       })
       .catch((error) => {
         // Handle Errors here.
-
         const errorCode = error.code;
         const errorMessage = error.message;
         console.log(errorMessage);
@@ -126,8 +142,6 @@ export default class LoginScene extends Phaser.Scene {
       name: user.displayName!,
       image: user.photoURL!,
       email: user.email!,
-      latestScore: 0,
-      highScore: 0,
     };
   }
 }
