@@ -30,6 +30,12 @@ export default class MainScene extends Phaser.Scene {
     // Checking is user is authenticated
     const user = await this.isUserAuthenticated();
 
+    // Displaying login options if user not authenticated
+    if (!user) {
+      this.scene.start("login");
+      return;
+    }
+
     // Getting user details from users collection
     if (user) {
       const docRef = doc(this.db, "users", user.uid);
@@ -38,12 +44,6 @@ export default class MainScene extends Phaser.Scene {
         this.user = docSnap.data() as IUser;
         this.scene.start("game", { user: this.user });
       }
-    }
-
-    // Displaying login options if user not authenticated
-    if (!this.user) {
-      this.scene.start("login");
-      return;
     }
   }
 

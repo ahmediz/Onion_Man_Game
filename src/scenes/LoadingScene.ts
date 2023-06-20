@@ -77,14 +77,14 @@ export default class LoadingScene extends Phaser.Scene {
     //   assetText.destroy();
     // });
 
-    // this.load.spritesheet({
-    //   key: "logo",
-    //   url: "assets/dude.png",
-    //   frameConfig: {
-    //     frameWidth: 32,
-    //     frameHeight: 48,
-    //   },
-    // });
+    this.load.spritesheet({
+      key: "logo",
+      url: "assets/dude.png",
+      frameConfig: {
+        frameWidth: 32,
+        frameHeight: 48,
+      },
+    });
     // for (let i = 0; i < 500; i++) {
     //   this.load.image("logo" + i, "assets/dude.png");
     // }
@@ -92,12 +92,14 @@ export default class LoadingScene extends Phaser.Scene {
 
   create() {
     const logo = this.add.sprite(
-      this.windowWidth / 2,
-      this.windowHeight / 2,
+      this.scale.width / 2,
+      this.scale.height / 2,
       "logo",
       4
     );
-    this.scene.start("main");
+    setTimeout(() => {
+      this.scene.start("main");
+    }, 1000);
   }
 
   update() {}

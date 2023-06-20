@@ -54,12 +54,6 @@ export default class GameScene extends Phaser.Scene {
     });
     this.load.image("sky", "assets/sky.png");
 
-    if (!this.sys.game.device.os.desktop) {
-      this.load.image("right", "assets/arrowRight.png");
-      this.load.image("left", "assets/arrowLeft.png");
-      this.load.image("up", "assets/arrowUp.png");
-    }
-
     // Loading
     const progressBar = this.add.graphics();
     const progressBox = this.add.graphics();
@@ -297,15 +291,15 @@ export default class GameScene extends Phaser.Scene {
       });
     }
 
-    this.scale.on("orientationchange", (orientation) => {
-      if (orientation === Phaser.Scale.PORTRAIT) {
-        console.log("portrait");
-        this.scale.resize(this.windowWidth, (this.windowHeight * 9) / 16);
-      } else if (orientation === Phaser.Scale.LANDSCAPE) {
-        console.log("landscape");
-        this.scale.resize(this.windowWidth, this.windowHeight);
-      }
-    });
+    // this.scale.on("orientationchange", (orientation) => {
+    //   if (orientation === Phaser.Scale.PORTRAIT) {
+    //     console.log("portrait");
+    //     this.scale.resize(this.windowWidth, (this.windowHeight * 9) / 16);
+    //   } else if (orientation === Phaser.Scale.LANDSCAPE) {
+    //     console.log("landscape");
+    //     this.scale.resize(this.windowWidth, this.windowHeight);
+    //   }
+    // });
 
     this.game.events.on("swipe", (dir) => {
       // 'up', 'right', 'down' or 'left'
@@ -402,7 +396,7 @@ export default class GameScene extends Phaser.Scene {
       await updateDoc(scoreDoc, {
         latestScore: this.score,
         highScore: Math.max(this.score, +this.user?.highScore! || 0),
-      }).then((res) => console.log(this.score));
+      });
     }
     setTimeout(() => {
       this.tryAgain();
